@@ -13,6 +13,7 @@ type Objects = Record<string, ObjectValue>;
 
 function App() {
   const [data, setData] = useState<string[][]>([]);
+  // @ts-ignore
   const [objs, setObjs] = useState<Objects>({});
 
   const handleChangeFile = (file: File | null) => {
