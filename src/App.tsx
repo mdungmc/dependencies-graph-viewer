@@ -3,18 +3,14 @@ import { AppShell, Button, FileInput, Flex } from '@mantine/core';
 import { Header } from './components/header';
 import { useState } from 'react';
 import Papa from 'papaparse';
-
-type ObjectValue = {
-  type: string;
-  targetIds: string[];
-};
-
-type Objects = Record<string, ObjectValue>;
+import type { Objects } from './types/objects';
+import { Graph } from './components/graph';
 
 function App() {
   const [data, setData] = useState<string[][]>([]);
   // @ts-ignore
   const [objs, setObjs] = useState<Objects>({});
+  const [showGraph, setShowGraph] = useState<boolean>(false);
 
   const handleChangeFile = (file: File | null) => {
     if (!file) return;
@@ -35,19 +31,24 @@ function App() {
       const newObjs = { ...prevObjs };
 
       data.forEach((row, index) => {
-        if (index === 0) return; // Bỏ qua hàng tiêu đề
+        if (index === 0) return;
 
         const [key1, type1, targetId, type2] = row;
 
         if (!newObjs[key1]) {
-          newObjs[key1] = { type: type1, targetIds: [] };
+          newObjs[key1] = { dataType: type1, targetIds: [], sourceIds: [] };
         }
+
         if (!newObjs[key1].targetIds.includes(targetId)) {
           newObjs[key1].targetIds.push(targetId);
         }
 
         if (!newObjs[targetId]) {
-          newObjs[targetId] = { type: type2, targetIds: [] };
+          newObjs[targetId] = { dataType: type2, targetIds: [], sourceIds: [] };
+        }
+
+        if (!newObjs[targetId].sourceIds.includes(key1)) {
+          newObjs[targetId].sourceIds.push(key1);
         }
       });
 
@@ -55,22 +56,27 @@ function App() {
 
       return newObjs;
     });
+
+    setShowGraph(true);
   };
 
   return (
     <AppShell className="mt-8" header={<Header />}>
-      <Flex gap={8} align="end">
-        <FileInput
-          accept=".csv"
-          onChange={(file) => handleChangeFile(file)}
-          label="Import file"
-          // @ts-ignore
-          placeholder="Pick file"
-        />
-        <Button disabled={!data} onClick={handleShowGraph}>
-          Show Graph Viewer
-        </Button>
-      </Flex>
+      <div>
+        <Flex gap={8} align="end">
+          <FileInput
+            accept=".csv"
+            onChange={(file) => handleChangeFile(file)}
+            label="Import file"
+            // @ts-ignore
+            placeholder="Pick file"
+          />
+          <Button disabled={!data} onClick={handleShowGraph}>
+            Show Graph Viewer
+          </Button>
+        </Flex>
+        {showGraph && <Graph objs={objs} />}
+      </div>
     </AppShell>
   );
 }
